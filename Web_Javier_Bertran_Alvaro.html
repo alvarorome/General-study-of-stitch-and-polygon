@@ -1,0 +1,518 @@
+<!DOCTYPE HTML> 
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>PROYECTO 1: Estudio general de punto y polígono</title>
+    <script src="https://sagecell.sagemath.org/static/jquery.min.js"></script>
+    <script src="https://sagecell.sagemath.org/embedded_sagecell.js"></script>
+    <script>
+$(function () {
+    sagecell.makeSagecell({
+        inputLocation: 'div.compute',
+        template: sagecell.templates.minimal,
+        evalButtonText: 'Lanzar applet interactiva (Comenzar exploración)'
+    });
+});
+</script>
+ <style>
+    body {
+      font-family: "Segoe UI", Roboto, sans-serif;
+      background: #f4f7fb;
+      color: #333;
+      margin: 0 auto;
+      max-width: 1000px;
+      line-height: 1.6;
+      padding: 20px;
+    }
+
+    h1, h2, h3 {
+      color: #003366;
+      text-align: center;
+    }
+
+    h1 {
+      background: linear-gradient(90deg, #003366, #005fa3);
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    }
+
+    h2 {
+    margin-top: 40px;
+    color: #cc0000; 
+    border-bottom: 3px solid #cc0000;
+    display: inline-block;
+    padding-bottom: 5px;
+    }
+
+    p, li {
+      font-size: 1.05em;
+    }
+
+    ul {
+      background: #e8f0fe;
+      padding: 15px 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    li {
+      margin: 6px 0;
+    }
+
+    hr {
+      border: none;
+      border-top: 2px solid #005fa3;
+      margin: 30px 0;
+    }
+
+    .compute {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 30px 0;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+    }
+
+    button.sagecell_evalButton {
+      background-color: #005fa3 !important;
+      color: white !important;
+      border: none !important;
+      border-radius: 8px !important;
+      padding: 10px 16px !important;
+      font-weight: bold;
+      transition: background 0.3s ease;
+    }
+
+    button.sagecell_evalButton:hover {
+      background-color: #0077cc !important;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      color: #777;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+
+<body> 
+
+<h1>PROYECTO 1: Estudio general de punto y polígono</h1>
+
+<li>Javier Mendoza Guerrero</li>
+<li>Luis Bertrán Vidal Campos</li>
+<li>Álvaro Rodríguez Mesa</li>
+
+<hr>
+
+<h2>Introducción</h2>
+<p>
+    El algoritmo genera de manera aleatoria un polígono y analiza sus propiedades geométricas, así como la relación de un punto aleatorio con dicho polígono. 
+    Se fundamenta en conceptos de geometría computacional, incluyendo:
+</p>
+<ul>
+    <li>La detección de convexidad mediante el cálculo del área signada.</li>
+    <li>La determinación de si un punto es interior o exterior utilizando el algoritmo del rayo.</li>
+    <li>El cálculo de las tangentes desde un punto al polígono.</li>
+    <li>El cálculo de las diagonales del polígono.</li>
+    <li>El cálculo del área total.</li>
+    <li>La clasificación de los vértices como convexos, cóncavos o colineales.</li>
+</ul>
+<p>
+    Además, el sistema ofrece una visualización clara de la estructura geométrica del polígono, facilitando la comprensión de sus características.
+</p>
+`
+
+
+
+<h2>Instrucciones</h2>
+<ul>
+    <li>El slider "Número de vértices" permite elegir entre 3 y 12 vértices (mínimo de 3 vertices para construir polígono).</li>
+    <li>Los vértices y el punto se generan aleatoriamente.</li>
+</ul>
+
+<h3>Convenciones de Colores en la Visualización</h3>
+<ul>
+    <li>Punto interior: azul claro</li>
+    <li>Punto exterior: morado</li>
+    <li>Vértices convexos: verde</li>
+    <li>Vértices cóncavos: rojo</li>
+    <li>Vértices colineales: naranja</li>
+    <li>Tangentes desde punto exterior: amarillo</li>
+    <li>Diagonales internas: azul oscuro</li>
+    <li>Diagonales externas: rojo</li>
+    <li>Envolvente convexa: interior morado clarito</li>
+</ul>
+
+<div class="compute">
+<script type="text/x-sage">
+
+def areaSignada(a, b, c): #de la practica 1A
+     return ((b[0]-a[0])*(c[1]-a[1]) - (b[1]-a[1])*(c[0]-a[0])) / 2
+
+def esConvexo(vertices, i):
+    n = len(vertices)
+    a = vertices[(i - 1) % n]
+    b = vertices[i]
+    c = vertices[(i + 1) % n]
+    return areaSignada(a, b, c) > 0
+
+def dist(p, q):
+    return sqrt((p[0]-q[0])**2 + (p[1]-q[1])**2)
+
+def enSegmento(p, s):
+    if areaSignada(p, s[0], s[1]) != 0:
+        return False
+    return float(dist(p, s[0])) + float(dist(p, s[1])) == float(dist(s[0], s[1]))
+
+def testInterseccionSegmentos(p, q):
+    if (areaSignada(p[0], p[1], q[0]) * areaSignada(p[0], p[1], q[1]) < 0 and
+        areaSignada(q[0], q[1], p[0]) * areaSignada(q[0], q[1], p[1]) < 0):
+        return True
+    else:
+        if enSegmento(p[0], q) or enSegmento(p[1], q) or enSegmento(q[0], p) or enSegmento(q[1], p):
+            return True
+        else:
+            return False
+
+def interseca(p1, p2, p3, p4):
+    return testInterseccionSegmentos([p1, p2], [p3, p4])
+
+def Xmin(p):
+    return min(p)
+
+def ordenAngular(p,C):
+    derecha=[]
+    izquierda=[]
+    superior=[]
+    inferior=[]
+    for i in p:
+        if i[0]>C[0]:
+            derecha.append(i)
+        elif i[0]<C[0]:
+            izquierda.append(i)
+        elif i[0]==C[0] and i[1]>C[1]:
+            superior.append(i)
+        elif i[0]==C[0] and i[1]<C[1]:
+            inferior.append(i)
+        
+    derecha=sorted(derecha,key=lambda x:[(x[1]-C[1])/(x[0]-C[0]),dist(x,C)])
+    izquierda=sorted(izquierda,key=lambda x:[(x[1]-C[1])/(x[0]-C[0]),dist(x,C)])
+    superior=sorted(superior)
+    inferior=sorted(inferior)
+    if C in p:
+        return [C]+derecha+superior+izquierda+inferior
+    else:
+        return derecha+superior+izquierda+inferior
+
+def Graham(P):
+    if len(P)<3:
+        return P
+    O=Xmin(P)
+    Q=ordenAngular(P,O)
+    i=1
+    while i<len(Q)-1:
+        if areaSignada(Q[i-1],Q[i],Q[i+1%len(Q)])<0:
+            Q.pop(i)
+            if i>0:
+                i=i-1
+        else:
+            i=i+1
+    return Q
+
+
+def PoligonoConvexo(vertices): 
+    n = len(vertices)
+    vertices_convexos = []
+    vertices_concavos = []
+
+    for i in range(n): 
+        vertice_anterior = vertices[i - 1] if i - 1 >= 0 else vertices[n - 1]
+        vertice_actual = vertices[i]
+        vertice_siguiente = vertices[i + 1] if i + 1 < n else vertices[0]
+        
+        if areaSignada(vertice_anterior, vertice_actual, vertice_siguiente) >= 0: 
+            vertices_convexos.append(vertice_actual) 
+        else: 
+            vertices_concavos.append(vertice_actual)
+
+    return len(vertices_concavos) == 0
+
+def algoritmoRayos(punto, poligono):
+    dentro_bool = False
+    px, py = punto
+    num_vertices = len(poligono)
+    for i in range(num_vertices):
+        x_i, y_i = poligono[i]
+        x_j, y_j = poligono[(i + 1) % num_vertices]
+        if ((y_i > py) != (y_j > py)) and (px < (x_j - x_i) * (py - y_i) / (y_j - y_i) + x_i):
+            dentro_bool = not dentro_bool
+    return dentro_bool
+
+def punto_en_poligono(poligono, punto):
+    poligono = [list(v) for v in poligono]
+    punto = list(punto)
+
+    dentro_bool = algoritmoRayos(punto, poligono)
+
+    if dentro_bool:
+        print(f"El punto {punto} está dentro del polígono.")
+    else:
+        print(f"El punto {punto} está fuera del polígono.")
+    return dentro_bool
+
+def es_tangente(punto_exterior, poligono, i):
+    n = len(poligono)
+    vertice_anterior = poligono[(i - 1) % n]
+    vertice_actual = poligono[i]
+    vertice_siguiente = poligono[(i + 1) % n]
+
+    izq1 = areaSignada(vertice_anterior, vertice_actual, punto_exterior) >= 0
+    izq2 = areaSignada(vertice_actual, vertice_siguiente, punto_exterior) >= 0
+
+    # XOR  
+    es_tang = izq1 != izq2
+
+    #verificamos que el segmento desde el punto exterior al vértice no atraviese ningún lado
+    if es_tang:
+        for j in range(n):
+            lado = [poligono[j], poligono[(j+1) % n]]
+            #ignoramos el lado que contiene el vértice actual
+            if vertice_actual in lado:
+                continue
+            if interseca(punto_exterior, vertice_actual, lado[0], lado[1]):
+                return False
+
+    return es_tang
+
+
+def tangentes_punto_poligono(punto_exterior, poligono):
+    if punto_en_poligono(poligono, punto_exterior):
+        print("El punto está dentro del polígono, no se pueden calcular tangentes.")
+        return []
+
+    tangentes = []
+    for i in range(len(poligono)):
+        if es_tangente(punto_exterior, poligono, i):
+            tangentes.append(i)
+
+    return tangentes
+
+def areaPoligono(p):
+    area = 0
+    for i in range(1,len(p)-1):
+        area += areaSignada(p[0],p[i],p[i+1])
+    return area 
+
+def esDiagonalValida(vertices, i, j):
+    n = len(vertices)
+    p_i = vertices[i]
+    p_j = vertices[j]
+
+    for k in range(n):
+        k2 = (k + 1) % n
+
+        #ignoramos los lados del polígono que tienen como vértices a i o j para no contar como intersección los extremos de la diagonal
+        if k in (i, j) or k2 in (i, j):
+            continue
+
+        #si la diagonal interseca un lado del polígono no es válida
+        if interseca(p_i, p_j, vertices[k], vertices[k2]):
+            return False
+
+    return True
+
+
+
+def esDiagonalInterna(vertices, i, j):
+    n = len(vertices)
+    vi = vertices[i]
+    vj = vertices[j]
+    vi_prev = vertices[(i - 1) % n]
+    vi_next = vertices[(i + 1) % n]
+
+    orient_prev = areaSignada(vi, vj, vi_prev)
+    orient_next = areaSignada(vi, vj, vi_next)
+
+    if esConvexo(vertices, i):
+        return orient_prev > 0 and orient_next < 0
+
+    return not (orient_prev < 0 and orient_next > 0)
+
+ 
+def calcularDiagonales(vertices):
+    n = len(vertices)
+    diagonales_internas = []
+    diagonales_externas = []
+
+    for i in range(n):
+        for j in range(i + 1, n):
+            #no contamos como diagonal los lados del polígono
+            if j == (i + 1) % n or i == (j + 1) % n:
+                continue
+
+            if not esDiagonalValida(vertices, i, j):
+                continue  
+
+            if esDiagonalInterna(vertices, i, j):
+                diagonales_internas.append((i, j))
+            else:
+                diagonales_externas.append((i, j))
+
+    return diagonales_internas, diagonales_externas
+
+def clasificar_vertices_listas(poly):
+    convexos, concavos, colineales = [], [], []
+    n = len(poly)
+
+    for i in range(n):
+        v_anterior  = poly[(i-1) % n]
+        v_actual    = poly[i]
+        v_siguiente = poly[(i+1) % n]
+
+        area = areaSignada(v_anterior, v_actual, v_siguiente)
+
+        if area > 0:
+            convexos.append((i, v_actual))
+        elif area < 0:
+            concavos.append((i, v_actual))
+        else:
+            colineales.append((i, v_actual))
+
+    print(f"Número de vértices convexos: {len(convexos)}")
+    print(f"Número de vértices cóncavos: {len(concavos)}")
+    print(f"Número de vértices colineales: {len(colineales)}")
+
+    return convexos, concavos, colineales
+
+def dibujar_clasificacion_vertices(poly):
+    convexos, concavos, colineales = clasificar_vertices_listas(poly)
+    G = polygon(poly, color='lightblue', edgecolor='black')
+    if convexos:
+        G += sum([point(v, color='green', size=60, legend_label="Convexo")
+                  for _, v in convexos])
+    if concavos:
+        G += sum([point(v, color='red', size=60, legend_label="Cóncavo")
+                  for _, v in concavos])
+    if colineales:
+        G += sum([point(v, color='orange', size=60, legend_label="Colineal")
+                  for _, v in colineales])
+    show(G)
+    return convexos, concavos, colineales
+
+
+def generar_poligono_simple(n):
+    import random #importamos para que no haya conflictos
+    vertices = [(random.uniform(0, 10), random.uniform(0, 10)) for _ in range(n)]
+    cx = sum(x for x, y in vertices) / n
+    cy = sum(y for x, y in vertices) / n
+    vertices.sort(key=lambda p: atan2(p[1]-cy, p[0]-cx)) 
+    return vertices
+
+@interact
+def applet_interactivo(puntos=slider(3, 12, 1, 5, label="Número de vértices")):
+    import random #aquí también importamos para que no haya conflictos
+    
+    vertices = generar_poligono_simple(puntos)
+    punto = (random.uniform(0, 10), random.uniform(0, 10))
+    
+    figura_poligono = polygon(vertices, color='lightgreen', edgecolor='black', alpha=0.5)
+    
+    es_convexo_resultado = PoligonoConvexo(vertices)
+    
+    interior_exterior = "Interior" if punto_en_poligono(vertices, punto) else "Exterior"
+    
+    hull = Graham(vertices)
+    tangentes = tangentes_punto_poligono(punto, hull) if interior_exterior == "Exterior" else []
+    
+    area_poligono = areaPoligono(vertices)
+    
+    diagonales_internas, diagonales_externas = calcularDiagonales(vertices)
+    
+    convexos, concavos, colineales = clasificar_vertices_listas(vertices)
+    
+    G = figura_poligono
+    
+    hull = Graham(vertices)
+    G += polygon(hull, color='lavender', edgecolor='black', alpha=0.4)
+    G += sum([point(v, color='green', size=70) for v in hull])
+    
+    color_punto = 'blue' if interior_exterior == "Interior" else 'purple'
+    G += point(punto, color=color_punto, size=60)
+    
+    #vértices
+    G += sum([point(v, color='green', size=60) for _, v in convexos])
+    G += sum([point(v, color='red', size=60) for _, v in concavos])
+    G += sum([point(v, color='orange', size=60) for _, v in colineales])
+    
+    #diagonales
+    G += sum([line([vertices[i], vertices[j]], color='blue', thickness=2) 
+              for i,j in diagonales_internas])
+    G += sum([line([vertices[i], vertices[j]], color='red', thickness=2) 
+              for i,j in diagonales_externas])
+    
+    #tangentes
+    G += sum([line([punto, hull[i]], color='orange', thickness=2) 
+          for i in tangentes])
+    show(G)
+    
+    print(f"Polígono Convexo: {es_convexo_resultado}")
+    print(f"Punto {punto}: {interior_exterior}")
+    if tangentes:
+        print(f"Tangentes: {[vertices[i] for i in tangentes]}")
+    print(f"Área del Polígono: {area_poligono}")
+    print(f"Vértices Convexos: {[v for _, v in convexos]}")
+    print(f"Vértices Cóncavos: {[v for _, v in concavos]}")
+    print(f"Vértices Colineales: {[v for _, v in colineales]}")
+    print(f"Diagonales internas: {diagonales_internas}")
+    print(f"Diagonales externas: {diagonales_externas}")
+    print(f"Envolvente convexa: {hull}")
+
+
+</script>
+</div>
+
+<h2>Discusión y aplicaciones</h2>
+<h3>Discusión</h3> 
+<p>En esta sección se analizan los resultados del proyecto y la eficiencia de los algoritmos, además de la lógica detrás de alguna de las decisiones tomadas.</p>
+
+<h4>Complejidad de los algoritmos implementados</h4>
+<ul>
+    <li>Cálculo de área signada: O(1) por operación.</li>
+    <li>Clasificación de vértices (convexos, cóncavos, colineales): O(n) por recorrer todos los vértices y calcula área signada con sus vecinos.</li>
+    <li>Determinación si un punto está dentro del polígono (algoritmo del rayo): O(n), lineal en el número de lados. </li>
+    <li>Cálculo de tangentes desde un punto exterior: O(n²),porque llama n veces a es_tangente, cuyo peor caso es O(n) al comprobar todos los lados del polígono.</li>
+    <li>Cálculo de diagonales internas y externas: O(n³) en el peor caso, porque se prueba cada par de vértices y se verifica intersección con todos los lados.</li>
+    <li>Generación de polígono simple aleatorio: O(n log n), debido al ordenamiento de los puntos alrededor del centroide para garantizar un polígono simple.</li>
+    <li>Cálculo del área total del polígono: O(n), sumando áreas de triángulos formados por un vértice fijo y cada par de vértices consecutivos.</li>
+</ul>
+
+<h4>Justificación del algoritmo del rayo</h4>
+<p>
+A partir de la idea de areaSignada aprendida en clase se nos ocurrió que se podría determinar si un punto estaba dentro del polígono sumando las áreas de los triángulos formados entre el punto y cada par de vértices consecutivos. Si la suma coincidía con el área total del polígono, el punto estaría dentro.
+</p>
+<p>
+Sin embargo, este enfoque, aunque factible, tiene limitaciones. Por ello, investigamos e implementamos el algoritmo del rayo.
+</p>
+<ul>
+    <li>Evita errores numéricos que podrían surgir al sumar muchas áreas.</li>
+    <li>Implementación lineal O(n),  potencialmente más rápida que el método basado en áreas.</li>
+</ul>
+
+<h3>Aplicaciones</h3>
+<ul>
+    <li><strong>Robótica y navegación autónoma:</strong> La función interseca permite comprobar si la ruta planificada de un robot colisiona con algún obstáculo modelado como polígono</li>
+    <li><strong>Optimización: </strong> Con areaPoligono puedo evaluar regiones de interés y compararlas para mejorar la función objetivo de un problema de optimización</li>
+    <li><strong>Arquitectura y diseño urbano:</strong> Evaluación de espacios  disposición de elementos.</li>
+    <li><strong>Visión por ordenador :</strong> La función clasificar_vertices_listas ayuda a identificar contornos convexos y cóncavos en objetos segmentados de una imagen</li>
+    <li><strong>Inteligencia artificial y aprendizaje automático (especialmente útil para alumnos IMAT):</strong> Análisis de polígonos para planificación de movimiento y entornos virtuales (por ejemplo: con tangentes_punto_poligono puedo calcular las líneas de visión de un agente en un entorno poligonal ).</li>
+</ul>
+
+<hr>
+
+</body>
+</html>
