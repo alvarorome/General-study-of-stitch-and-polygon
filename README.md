@@ -101,6 +101,6 @@ Este proyecto tiene aplicaciones directas en:
 
 ## Estructura del repositorio
 
-├── Proyecto_Final_Geometria_Javier_Bertran_Alvaro.ipynb
-├── Web_Javier_Bertran_Alvaro.html
-└── README.md
+- Proyecto_Final_Geometria_Javier_Bertran_Alvaro.ipynb
+- Web_Javier_Bertran_Alvaro.html
+- README.md
